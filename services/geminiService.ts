@@ -5,16 +5,7 @@ import { CategoryData } from "../types";
 // based on the user's massive list using Gemini 2.5 Flash.
 
 export const generateCategoryItems = async (topic: string): Promise<string[]> => {
-  let apiKey = '';
-  
-  // Safe access to process.env to avoid ReferenceError in some browser environments
-  try {
-    if (typeof process !== 'undefined' && process.env) {
-      apiKey = process.env.API_KEY || '';
-    }
-  } catch (e) {
-    console.warn("Could not access process.env", e);
-  }
+  const apiKey = process.env.API_KEY;
   
   // If no API key is present, return a generated mock list to ensure the app remains playable.
   if (!apiKey) {
