@@ -413,22 +413,16 @@ export default function App() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="bg-[#2DB657] p-3 rounded-xl text-white">
                   <div className="aspect-square bg-white rounded-lg mb-2 flex items-center justify-center overflow-hidden">
-                     {/* Replace src with your actual WeChat QR code image */}
-                     {/* <img src="/wechat.jpg" alt="WeChat Pay" className="w-full h-full object-cover" /> */}
-                     <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-400 text-xs">
-                        微信二维码
-                     </div>
+                     {/* QR Code Image: WeChat */}
+                     <img src="/wechat.jpg" alt="微信支付" className="w-full h-full object-cover" />
                   </div>
                   <div className="font-bold">微信支付</div>
                 </div>
                 
                 <div className="bg-[#1677FF] p-3 rounded-xl text-white">
                   <div className="aspect-square bg-white rounded-lg mb-2 flex items-center justify-center overflow-hidden">
-                     {/* Replace src with your actual Alipay QR code image */}
-                     {/* <img src="/alipay.jpg" alt="Alipay" className="w-full h-full object-cover" /> */}
-                     <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-400 text-xs">
-                        支付宝二维码
-                     </div>
+                     {/* QR Code Image: Alipay */}
+                     <img src="/alipay.jpg" alt="支付宝" className="w-full h-full object-cover" />
                   </div>
                   <div className="font-bold">支付宝</div>
                 </div>
