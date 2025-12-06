@@ -4,9 +4,7 @@ import {
   RotateCcw, 
   Camera, 
   Menu,
-  Globe,
-  Heart,
-  X
+  Globe
 } from 'lucide-react';
 import { 
   RankItem, 
@@ -76,9 +74,8 @@ export default function App() {
   const [showMobilePool, setShowMobilePool] = useState(false);
   const [showStats, setShowStats] = useState(false);
   
-  // New States for Save & Donate
+  // New States for Save
   const [isSaving, setIsSaving] = useState(false);
-  const [showDonate, setShowDonate] = useState(false);
   const captureRef = useRef<HTMLDivElement>(null);
 
   // Initialize Items when category changes
@@ -157,15 +154,9 @@ export default function App() {
       const finalNames = availableNames.length > 0 ? availableNames : CATEGORY_NAMES;
       const randomName = finalNames[Math.floor(Math.random() * finalNames.length)] || "Random Stuff";
       
-      // Try local fallback immediately if we want to avoid API wait, 
-      // but here we keep the mixed approach or fallback gracefully.
-      // For this user, we prioritize speed.
+      // Try local fallback immediately if we want to avoid API wait
       setIsGenerating(true);
       
-      // Direct mock gen to simulate "instant" feel if API key missing or slow
-      // But we will try API first if key exists, else mock.
-      // Actually, user compliant about speed, let's just use mock or pre-gen for these too
-      // or just call the service which now handles fallback fast.
       const generatedItems = await generateCategoryItems(randomName);
       setIsGenerating(false);
 
@@ -275,14 +266,6 @@ export default function App() {
             </div>
 
             <div className="flex flex-wrap gap-3">
-               <button 
-                  onClick={() => setShowDonate(true)}
-                  className="flex items-center gap-2 px-4 py-3 bg-pink-600 hover:bg-pink-700 text-white rounded-xl font-bold transition-all shadow-lg hover:shadow-pink-500/20 active:scale-95"
-                >
-                  <Heart className="w-5 h-5 fill-current" />
-                  <span>打赏</span>
-              </button>
-
               <button 
                   onClick={() => setShowStats(!showStats)} 
                   className={`flex items-center gap-2 px-4 py-3 rounded-xl font-bold transition-all border ${
@@ -391,50 +374,6 @@ export default function App() {
           </div>
         </div>
       </div>
-
-      {/* Donate Modal */}
-      {showDonate && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white text-gray-900 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden relative">
-            <button 
-              onClick={() => setShowDonate(false)}
-              className="absolute top-3 right-3 p-2 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </button>
-            
-            <div className="p-6 text-center">
-              <h3 className="text-2xl font-black mb-2 flex items-center justify-center gap-2">
-                <Heart className="w-6 h-6 text-red-500 fill-red-500" />
-                感谢支持
-              </h3>
-              <p className="text-gray-500 mb-6">如果觉得好玩，可以请作者喝杯咖啡 ☕️</p>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-[#2DB657] p-3 rounded-xl text-white">
-                  <div className="aspect-square bg-white rounded-lg mb-2 flex items-center justify-center overflow-hidden">
-                     {/* QR Code Image: WeChat */}
-                     <img src="/wechat.jpg" alt="微信支付" className="w-full h-full object-cover" />
-                  </div>
-                  <div className="font-bold">微信支付</div>
-                </div>
-                
-                <div className="bg-[#1677FF] p-3 rounded-xl text-white">
-                  <div className="aspect-square bg-white rounded-lg mb-2 flex items-center justify-center overflow-hidden">
-                     {/* QR Code Image: Alipay */}
-                     <img src="/alipay.jpg" alt="支付宝" className="w-full h-full object-cover" />
-                  </div>
-                  <div className="font-bold">支付宝</div>
-                </div>
-              </div>
-            </div>
-            
-            <div className="bg-gray-50 p-4 text-center text-xs text-gray-400 border-t">
-              RankMaster • 独立开发
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Global Styles for Print/Save */}
       <style>{`
