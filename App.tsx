@@ -13,9 +13,8 @@ import {
   GameState,
   TierStats
 } from './types';
-import { STATIC_CATEGORIES, TIERS_CONFIG, CATEGORY_NAMES } from './constants';
+import { STATIC_CATEGORIES, TIERS_CONFIG } from './constants';
 import { DroppableZone } from './components/DroppableZone';
-import { generateCategoryItems } from './services/geminiService';
 
 // Helper to create initial empty state
 const createInitialState = (): GameState => ({
@@ -69,8 +68,8 @@ export default function App() {
   const [currentCategory, setCurrentCategory] = useState<CategoryData>(STATIC_CATEGORIES[0]);
   const [rankedItems, setRankedItems] = useState<GameState>(createInitialState());
   const [poolItems, setPoolItems] = useState<RankItem[]>([]);
-  const [playedCategories, setPlayedCategories] = useState<Set<string>>(new Set([STATIC_CATEGORIES[0].id]));
-  const [isGenerating, setIsGenerating] = useState(false);
+  // Track played IDs to avoid repetition until all are played
+  const [playedCategoryIds, setPlayedCategoryIds] = useState<Set<string>>(new Set([STATIC_CATEGORIES[0].id]));
   const [showMobilePool, setShowMobilePool] = useState(false);
   const [showStats, setShowStats] = useState(false);
   
@@ -88,7 +87,14 @@ export default function App() {
     }));
     setPoolItems(newItems);
     setRankedItems(createInitialState());
-    setPlayedCategories(prev => new Set(prev).add(currentCategory.id));
+    
+    // Add to played history
+    setPlayedCategoryIds(prev => {
+        const next = new Set(prev);
+        next.add(currentCategory.id);
+        return next;
+    });
+
     setShowStats(false);
   }, [currentCategory]);
 
@@ -136,46 +142,20 @@ export default function App() {
     }
   }, [poolItems, rankedItems]);
 
-  // Feature: Random Next Category
-  const handleRandomNext = async () => {
-    // 1. Try to find a static category not played yet
-    const availableStatic = STATIC_CATEGORIES.filter(c => !playedCategories.has(c.id));
+  // Feature: Random Next Category (Pure Static)
+  const handleRandomNext = () => {
+    // Find categories not yet played
+    let available = STATIC_CATEGORIES.filter(c => !playedCategoryIds.has(c.id));
     
-    if (availableStatic.length > 0) {
-      const randomCat = availableStatic[Math.floor(Math.random() * availableStatic.length)];
-      setCurrentCategory(randomCat);
-    } else {
-      // 2. If all static played, pick a random name from the massive list
-      const availableNames = CATEGORY_NAMES.filter(name => 
-        !STATIC_CATEGORIES.some(sc => sc.name === name)
-      );
-      
-      // If truly empty (unlikely with 60+), reset played
-      const finalNames = availableNames.length > 0 ? availableNames : CATEGORY_NAMES;
-      const randomName = finalNames[Math.floor(Math.random() * finalNames.length)] || "Random Stuff";
-      
-      // Try local fallback immediately if we want to avoid API wait
-      setIsGenerating(true);
-      
-      const generatedItems = await generateCategoryItems(randomName);
-      setIsGenerating(false);
-
-      if (generatedItems.length > 0) {
-         const newCat: CategoryData = {
-           id: `gen-${Date.now()}`,
-           name: randomName,
-           items: generatedItems
-         };
-         setCurrentCategory(newCat);
-      } else {
-         const mockItems = Array.from({ length: 16 }, (_, i) => `${randomName} ${i + 1}`);
-         setCurrentCategory({
-           id: `mock-${Date.now()}`,
-           name: randomName,
-           items: mockItems
-         });
-      }
+    // If all played, reset history (except current)
+    if (available.length === 0) {
+        available = STATIC_CATEGORIES.filter(c => c.id !== currentCategory.id);
+        setPlayedCategoryIds(new Set([currentCategory.id]));
     }
+
+    // Pick random
+    const randomCat = available[Math.floor(Math.random() * available.length)];
+    setCurrentCategory(randomCat);
   };
 
   // Feature: Reset Current
@@ -200,17 +180,12 @@ export default function App() {
         return;
       }
 
-      // Add a temporary title element to the capture area if needed, 
-      // or just capture the whole container. 
-      // Current captureRef points to the scrollable area.
       const canvas = await window.html2canvas(captureRef.current, {
         useCORS: true,
         backgroundColor: '#111827', // Dark background
         scale: 2, // Retina quality
         logging: false,
         onclone: (clonedDoc: Document) => {
-            // Make sure the cloned element is fully visible (not scrolled)
-            // html2canvas usually handles this if height is set to scrollHeight
             const element = clonedDoc.getElementById('capture-target');
             if(element) {
                 element.style.height = 'auto';
@@ -280,11 +255,10 @@ export default function App() {
               
               <button 
                 onClick={handleRandomNext} 
-                disabled={isGenerating}
-                className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 px-6 py-3 rounded-xl font-bold shadow-lg transition-transform active:scale-95 disabled:opacity-50 text-white"
+                className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 px-6 py-3 rounded-xl font-bold shadow-lg transition-transform active:scale-95 text-white"
               >
                 <Dices className="w-5 h-5" />
-                {isGenerating ? 'Loading...' : '随机下一个'}
+                随机下一个
               </button>
               <button 
                 onClick={handleReset}
@@ -305,7 +279,6 @@ export default function App() {
           </div>
 
           {/* The Tier Board - Capture Target */}
-          {/* We add an ID for html2canvas to find and a ref */}
           <div 
             ref={captureRef} 
             id="capture-target"
@@ -359,11 +332,9 @@ export default function App() {
               showStats={showStats}
               className="h-full"
             />
-            {/* Fade effect at bottom */}
             <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-[#1a1a1a] to-transparent pointer-events-none"></div>
           </div>
 
-          {/* Mobile close button for pool */}
           <div className="md:hidden p-4 bg-gray-800 border-t border-gray-700">
              <button 
                onClick={() => setShowMobilePool(false)}
@@ -375,9 +346,7 @@ export default function App() {
         </div>
       </div>
 
-      {/* Global Styles for Print/Save */}
       <style>{`
-        /* Subtle Grid Pattern */
         .bg-pattern-grid {
           background-image: radial-gradient(#333 1px, transparent 1px);
           background-size: 24px 24px;
